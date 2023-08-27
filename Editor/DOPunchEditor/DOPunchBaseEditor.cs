@@ -6,34 +6,38 @@ using UnityEditor;
 
 namespace DOTweenModular2D.Editor
 {
-    [CustomEditor(typeof(DORotate)), CanEditMultipleObjects]
-    public class DORotateEditor : DOBaseEditor
+    [CustomEditor(typeof(DOPunchBase))]
+    [CanEditMultipleObjects]
+    public class DOPunchBaseEditor : DOBaseEditor
     {
 
         #region Serialized Properties
 
-        private SerializedProperty rotateModeProp;
-        private SerializedProperty useLocalProp;
-        private SerializedProperty speedBasedProp;
-        private SerializedProperty relativeProp;
-        private SerializedProperty targetZRotationProp;
+        private SerializedProperty vibratoProp;
+        private SerializedProperty elasticityProp;
 
         #endregion
 
-        private DORotate doRotate;
-
-        private string savedRotateSettingsFoldout;
-        private bool rotateSettingsFoldout = true;
+        private DOPunchBase doPunch;
 
         private bool[] tabStates = new bool[5];
         private string[] savedTabStates = new string[5];
 
+        #region Foldout Bool
+
+        private bool punchSettingsFoldout = true;
+        private string savedpunchSettingsFoldout;
+
+        #endregion
+
+        #region Unity Functions
+
         private void OnEnable()
         {
-            doRotate = (DORotate)target;
+            doPunch = (DOPunchBase)target;
 
             SetupSerializedProperties();
-            SetupSavedVariables(doRotate);
+            SetupSavedVariables(doPunch);
         }
 
         public override void OnInspectorGUI()
@@ -98,17 +102,17 @@ namespace DOTweenModular2D.Editor
             {
                 EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
-                // Draw Rotate Settings
-                rotateSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(rotateSettingsFoldout, "Rotate Settings");
-                EditorPrefs.SetBool(savedRotateSettingsFoldout, rotateSettingsFoldout);
-                if (rotateSettingsFoldout)
+                // Draw Punch Settings
+                punchSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(punchSettingsFoldout, "Punch Settings");
+                EditorPrefs.SetBool(savedpunchSettingsFoldout, punchSettingsFoldout);
+                if (punchSettingsFoldout)
                 {
                     EditorGUI.indentLevel++;
 
                     EditorGUILayout.BeginVertical("HelpBox");
                     EditorGUILayout.Space();
 
-                    DrawRotateSettings();
+                    DrawPunchSettings();
 
                     EditorGUILayout.Space();
                     EditorGUILayout.EndVertical();
@@ -177,17 +181,19 @@ namespace DOTweenModular2D.Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        private void OnSceneGUI()
+        protected void OnSceneGUI()
         {
-            if (doRotate.begin == Begin.After ||
-                doRotate.begin == Begin.With)
+            if (doPunch.begin == Begin.After ||
+                doPunch.begin == Begin.With)
             {
                 Handles.color = Color.white;
 
-                if (doRotate.tweenObject != null)
+                if (doPunch.tweenObject != null)
                     DrawLineToTweenObject();
             }
         }
+
+        #endregion
 
         #region Draw Functions
 
@@ -198,7 +204,7 @@ namespace DOTweenModular2D.Editor
             GUIStyle toggleStyle = new GUIStyle(EditorStyles.miniButton);
             toggleStyle.fixedHeight = 30f;
 
-            string[] tabNames = new string[] { "Life", "Type", "Rotate", "Values", "Events" };
+            string[] tabNames = new string[] { "Life", "Type", "Punch", "Values", "Events" };
 
             for (int i = 0; i < tabStates.Length; i++)
             {
@@ -214,25 +220,10 @@ namespace DOTweenModular2D.Editor
             GUILayout.EndHorizontal();
         }
 
-        protected override void DrawTypeSettings()
+        private void DrawPunchSettings()
         {
-            base.DrawTypeSettings();
-
-            EditorGUILayout.PropertyField(rotateModeProp);
-        }
-
-        private void DrawRotateSettings()
-        {
-            EditorGUILayout.PropertyField(useLocalProp);
-            EditorGUILayout.PropertyField(speedBasedProp);
-            EditorGUILayout.PropertyField(relativeProp);
-        }
-
-        protected override void DrawValues()
-        {
-            EditorGUILayout.PropertyField(targetZRotationProp);
-
-            base.DrawValues();
+            EditorGUILayout.PropertyField(vibratoProp);
+            EditorGUILayout.PropertyField(elasticityProp);
         }
 
         #endregion
@@ -243,25 +234,22 @@ namespace DOTweenModular2D.Editor
         {
             base.SetupSerializedProperties();
 
-            rotateModeProp = serializedObject.FindProperty("rotateMode");
-            speedBasedProp = serializedObject.FindProperty("speedBased");
-            useLocalProp = serializedObject.FindProperty("useLocal");
-            relativeProp = serializedObject.FindProperty("relative");
-            targetZRotationProp = serializedObject.FindProperty("targetZRotation");
+            vibratoProp = serializedObject.FindProperty("vibrato");
+            elasticityProp = serializedObject.FindProperty("elasticity");
         }
 
-        protected override void SetupSavedVariables(DOBase dORotate)
+        protected override void SetupSavedVariables(DOBase doPunchBase)
         {
-            base.SetupSavedVariables(dORotate);
+            base.SetupSavedVariables(doPunchBase);
 
-            int instanceId = dORotate.GetInstanceID();
+            int instanceId = doPunchBase.GetInstanceID();
 
-            savedRotateSettingsFoldout = "DORotateEditor_rotateSettingsFoldout_" + instanceId;
-            rotateSettingsFoldout = EditorPrefs.GetBool(savedRotateSettingsFoldout, true);
+            savedpunchSettingsFoldout = "DOPunchEditor_punchSettingsFoldout_" + instanceId;
+            punchSettingsFoldout = EditorPrefs.GetBool(savedpunchSettingsFoldout, true);
 
             for (int i = 0; i < savedTabStates.Length; i++)
             {
-                savedTabStates[i] = "DORotateEditor_tabStates_" + i + " " + instanceId;
+                savedTabStates[i] = "DOPunchEditor_tabStates_" + i + " " + instanceId;
                 tabStates[i] = EditorPrefs.GetBool(savedTabStates[i], true);
             }
         }

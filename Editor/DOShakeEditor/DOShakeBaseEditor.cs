@@ -1,39 +1,43 @@
 #if UNITY_EDITOR
 
-using DOTweenModular2D.Enums;
 using UnityEngine;
 using UnityEditor;
 
 namespace DOTweenModular2D.Editor
 {
-    [CustomEditor(typeof(DORotate)), CanEditMultipleObjects]
-    public class DORotateEditor : DOBaseEditor
+    [CustomEditor(typeof(DOShakeBase))]
+    [CanEditMultipleObjects]
+    public class DOShakeBaseEditor : DOBaseEditor
     {
-
         #region Serialized Properties
 
-        private SerializedProperty rotateModeProp;
-        private SerializedProperty useLocalProp;
-        private SerializedProperty speedBasedProp;
-        private SerializedProperty relativeProp;
-        private SerializedProperty targetZRotationProp;
+        private SerializedProperty fadeOutProp;
+        private SerializedProperty vibratoProp;
+        private SerializedProperty randomnessProp;
+        private SerializedProperty randomnessModeProp;
 
         #endregion
 
-        private DORotate doRotate;
-
-        private string savedRotateSettingsFoldout;
-        private bool rotateSettingsFoldout = true;
+        private DOShakeBase doShake;
 
         private bool[] tabStates = new bool[5];
         private string[] savedTabStates = new string[5];
 
+        #region Foldout Bool
+
+        private bool shakeSettingsFoldout = true;
+        private string savedShakeSettingsFoldout;
+
+        #endregion
+
+        #region Unity Functions
+
         private void OnEnable()
         {
-            doRotate = (DORotate)target;
+            doShake = (DOShakeBase)target;
 
             SetupSerializedProperties();
-            SetupSavedVariables(doRotate);
+            SetupSavedVariables(doShake);
         }
 
         public override void OnInspectorGUI()
@@ -99,16 +103,16 @@ namespace DOTweenModular2D.Editor
                 EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
                 // Draw Rotate Settings
-                rotateSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(rotateSettingsFoldout, "Rotate Settings");
-                EditorPrefs.SetBool(savedRotateSettingsFoldout, rotateSettingsFoldout);
-                if (rotateSettingsFoldout)
+                shakeSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(shakeSettingsFoldout, "Shake Settings");
+                EditorPrefs.SetBool(savedShakeSettingsFoldout, shakeSettingsFoldout);
+                if (shakeSettingsFoldout)
                 {
                     EditorGUI.indentLevel++;
 
                     EditorGUILayout.BeginVertical("HelpBox");
                     EditorGUILayout.Space();
 
-                    DrawRotateSettings();
+                    DrawShakeSettings();
 
                     EditorGUILayout.Space();
                     EditorGUILayout.EndVertical();
@@ -177,17 +181,19 @@ namespace DOTweenModular2D.Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        private void OnSceneGUI()
+        protected void OnSceneGUI()
         {
-            if (doRotate.begin == Begin.After ||
-                doRotate.begin == Begin.With)
+            if (doShake.begin == Enums.Begin.After ||
+                doShake.begin == Enums.Begin.With)
             {
                 Handles.color = Color.white;
 
-                if (doRotate.tweenObject != null)
+                if (doShake.tweenObject != null)
                     DrawLineToTweenObject();
             }
         }
+
+        #endregion
 
         #region Draw Functions
 
@@ -198,7 +204,7 @@ namespace DOTweenModular2D.Editor
             GUIStyle toggleStyle = new GUIStyle(EditorStyles.miniButton);
             toggleStyle.fixedHeight = 30f;
 
-            string[] tabNames = new string[] { "Life", "Type", "Rotate", "Values", "Events" };
+            string[] tabNames = new string[] { "Life", "Type", "Shake", "Values", "Events" };
 
             for (int i = 0; i < tabStates.Length; i++)
             {
@@ -214,25 +220,12 @@ namespace DOTweenModular2D.Editor
             GUILayout.EndHorizontal();
         }
 
-        protected override void DrawTypeSettings()
+        private void DrawShakeSettings()
         {
-            base.DrawTypeSettings();
-
-            EditorGUILayout.PropertyField(rotateModeProp);
-        }
-
-        private void DrawRotateSettings()
-        {
-            EditorGUILayout.PropertyField(useLocalProp);
-            EditorGUILayout.PropertyField(speedBasedProp);
-            EditorGUILayout.PropertyField(relativeProp);
-        }
-
-        protected override void DrawValues()
-        {
-            EditorGUILayout.PropertyField(targetZRotationProp);
-
-            base.DrawValues();
+            EditorGUILayout.PropertyField(fadeOutProp);
+            EditorGUILayout.PropertyField(vibratoProp);
+            EditorGUILayout.PropertyField(randomnessProp);
+            EditorGUILayout.PropertyField(randomnessModeProp);
         }
 
         #endregion
@@ -243,25 +236,24 @@ namespace DOTweenModular2D.Editor
         {
             base.SetupSerializedProperties();
 
-            rotateModeProp = serializedObject.FindProperty("rotateMode");
-            speedBasedProp = serializedObject.FindProperty("speedBased");
-            useLocalProp = serializedObject.FindProperty("useLocal");
-            relativeProp = serializedObject.FindProperty("relative");
-            targetZRotationProp = serializedObject.FindProperty("targetZRotation");
+            fadeOutProp = serializedObject.FindProperty("fadeOut");
+            vibratoProp = serializedObject.FindProperty("vibrato");
+            randomnessProp = serializedObject.FindProperty("randomness");
+            randomnessModeProp = serializedObject.FindProperty("randomnessMode");
         }
 
-        protected override void SetupSavedVariables(DOBase dORotate)
+        protected override void SetupSavedVariables(DOBase dOShake)
         {
-            base.SetupSavedVariables(dORotate);
+            base.SetupSavedVariables(dOShake);
 
-            int instanceId = dORotate.GetInstanceID();
+            int instanceId = dOShake.GetInstanceID();
 
-            savedRotateSettingsFoldout = "DORotateEditor_rotateSettingsFoldout_" + instanceId;
-            rotateSettingsFoldout = EditorPrefs.GetBool(savedRotateSettingsFoldout, true);
+            savedShakeSettingsFoldout = "DOShakeEditor_shakeSettingsFoldout_" + instanceId;
+            shakeSettingsFoldout = EditorPrefs.GetBool(savedShakeSettingsFoldout, true);
 
             for (int i = 0; i < savedTabStates.Length; i++)
             {
-                savedTabStates[i] = "DORotateEditor_tabStates_" + i + " " + instanceId;
+                savedTabStates[i] = "DOShakeEditor_tabStates_" + i + " " + instanceId;
                 tabStates[i] = EditorPrefs.GetBool(savedTabStates[i], true);
             }
         }

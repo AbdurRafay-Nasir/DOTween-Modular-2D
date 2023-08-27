@@ -3,26 +3,31 @@ using DOTweenModular2D.Enums;
 using UnityEngine;
 
 namespace DOTweenModular2D
-{   
-    [AddComponentMenu("DOTween Modular 2D/Transform/DO Move", 50)]
-    public class DOMove : DOBase
+{
+    [AddComponentMenu("DOTween Modular 2D/Transform/DO Jump")]
+    public class DOJump : DOBase
     {
-        [Tooltip("If TRUE, the tween will Move duration amount in each second")]
-        public bool speedBased;
-
         [Tooltip("If TRUE, the targetPosition will be calculated as: " + "\n" +
                   "targetPosition = targetPosition + transform.position")]
         public bool relative;
 
+        [Tooltip("If TRUE, game object will move in local space")]
+        public bool useLocal;
+
         [Tooltip("If TRUE, the tween will smoothly snap all values to integers")]
         public bool snapping;
 
-        [Tooltip("The position to reach, if relative is true game object will move as: " + "\n" + 
+        [Tooltip("The position to reach, if relative is true game object will move as: " + "\n" +
                  "targetPosition = targetPosition + transform.position")]
         public Vector2 targetPosition;
 
-        [Tooltip("If TRUE, game object will move in local space")]
-        public bool useLocal;
+        [Tooltip("Maximum height object should reach")]
+        public float jumpPower;
+
+        [Tooltip("Number of Jumps")]
+        [Min(1)] public int jumps;
+
+        #region Look At Properties
 
         [Tooltip("Type of Look At")]
         public LookAtSimple lookAt;
@@ -45,14 +50,15 @@ namespace DOTweenModular2D
         [Tooltip("Smoothness of rotation, 1 means there will be no smoothness")]
         [Range(0f, 1f)] public float smoothFactor = 0.01f;
 
+        #endregion
+
         public override void CreateTween()
         {
             if (useLocal)
-                tween = transform.DOLocalMove(targetPosition, duration, snapping);
-          
+                tween = transform.DOLocalJump(targetPosition, jumpPower, jumps, duration, snapping);
             else
-                tween = transform.DOMove(targetPosition, duration, snapping);
-        
+                tween = transform.DOJump(targetPosition, jumpPower, jumps, duration, snapping);
+
             if (easeType == Ease.INTERNAL_Custom)
                 tween.SetEase(curve);
             else
@@ -61,8 +67,9 @@ namespace DOTweenModular2D
             if (tweenType == Enums.TweenType.Looped)
                 tween.SetLoops(loops, loopType);
 
-            tween.SetSpeedBased(speedBased);
-            tween.SetRelative(relative);
+            if (!useLocal) 
+                tween.SetRelative(relative);
+
             tween.SetDelay(delay);
 
             InvokeTweenCreated();
@@ -72,7 +79,6 @@ namespace DOTweenModular2D
                 tween.onComplete += OnTweenCompleted;
                 tween.onUpdate += OnTweenUpdated;
             }
-
         }
 
         private void OnTweenUpdated()

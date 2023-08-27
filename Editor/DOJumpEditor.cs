@@ -1,38 +1,33 @@
 #if UNITY_EDITOR
 
 using DOTweenModular2D.Enums;
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
 namespace DOTweenModular2D.Editor
 {
-    [CustomEditor(typeof(DOMove)), CanEditMultipleObjects]
-    public class DOMoveEditor : DOBaseEditor
+    [CustomEditor(typeof(DOJump))]
+    [CanEditMultipleObjects]
+    public class DOJumpEditor : DOBaseEditor
     {
-
         #region Serialized Properties
 
-        private SerializedProperty speedBasedProp;
+        private SerializedProperty jumpPowerProp;
+        private SerializedProperty jumpsProp;
         private SerializedProperty useLocalProp;
         private SerializedProperty relativeProp;
-        private SerializedProperty snappingProp;
         private SerializedProperty targetPositionProp;
+        private SerializedProperty snappingProp;
 
         private SerializedProperty lookAtProp;
         private SerializedProperty lookAtTargetProp;
         private SerializedProperty lookAtPositionProp;
+        private SerializedProperty offsetProp;
         private SerializedProperty minProp;
         private SerializedProperty maxProp;
-        private SerializedProperty offsetProp;
         private SerializedProperty smoothFactorProp;
 
         #endregion
-
-        private DOMove doMove;
-        private Vector3 beginPosition;
-
-        private bool[] tabStates = new bool[7];
-        private string[] savedTabStates = new string[7];
 
         #region Saved Variables
 
@@ -44,25 +39,31 @@ namespace DOTweenModular2D.Editor
 
         #endregion
 
-        #region Foldout bool Properties
+        #region Foldout Bools
 
-        private bool moveSettingsFoldout = true;
-        private string savedMoveSettingsFoldout;
+        private bool jumpSettingsFoldout = true;
+        private string savedJumpSettingsFoldout;
 
         private bool lookAtSettingsFoldout = true;
         private string savedLookAtSettingsFoldout;
 
         #endregion
 
+        private DOJump doJump;
+        private Vector2 beginPosition;
+
+        private bool[] tabStates = new bool[6];
+        private string[] savedTabStates = new string[6];
+
         #region Unity Functions
 
         private void OnEnable()
         {
-            doMove = (DOMove)target;
-            beginPosition = doMove.transform.position;
+            doJump = (DOJump)target;
+            beginPosition = doJump.transform.position;
 
             SetupSerializedProperties();
-            SetupSavedVariables(doMove);
+            SetupSavedVariables(doJump);
         }
 
         public override void OnInspectorGUI()
@@ -102,7 +103,7 @@ namespace DOTweenModular2D.Editor
             if (tabStates[1])
             {
                 EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-
+                
                 // Draw Type Settings
                 typeSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(typeSettingsFoldout, "Type Settings");
                 EditorPrefs.SetBool(savedTypeSettingsFoldout, typeSettingsFoldout);
@@ -128,16 +129,16 @@ namespace DOTweenModular2D.Editor
                 EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
                 // Draw Move Settings
-                moveSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(moveSettingsFoldout, "Move Settings");
-                EditorPrefs.SetBool(savedMoveSettingsFoldout, moveSettingsFoldout);
-                if (moveSettingsFoldout)
+                jumpSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(jumpSettingsFoldout, "Jump Settings");
+                EditorPrefs.SetBool(savedJumpSettingsFoldout, jumpSettingsFoldout);
+                if (jumpSettingsFoldout)
                 {
                     EditorGUI.indentLevel++;
 
                     EditorGUILayout.BeginVertical("HelpBox");
                     EditorGUILayout.Space();
 
-                    DrawMoveSettings();
+                    DrawJumpSettings();
 
                     EditorGUILayout.Space();
                     EditorGUILayout.EndVertical();
@@ -146,7 +147,6 @@ namespace DOTweenModular2D.Editor
                 }
                 EditorGUILayout.EndFoldoutHeaderGroup();
             }
-
 
             if (tabStates[3])
             {
@@ -172,11 +172,11 @@ namespace DOTweenModular2D.Editor
                 EditorGUILayout.EndFoldoutHeaderGroup();
             }
 
-            if (doMove.lookAt == LookAtSimple.Transform && doMove.lookAtTarget == null)
+            if (doJump.lookAt == LookAtSimple.Transform && doJump.lookAtTarget == null)
             {
                 EditorGUILayout.HelpBox("Look At Target not Assigned", MessageType.Error);
             }
-            else if (doMove.lookAt != LookAtSimple.Transform && doMove.lookAtTarget != null)
+            else if (doJump.lookAt != LookAtSimple.Transform && doJump.lookAtTarget != null)
             {
                 EditorGUILayout.BeginHorizontal();
 
@@ -187,7 +187,7 @@ namespace DOTweenModular2D.Editor
 
                 if (GUILayout.Button(trashButton, GUILayout.Height(buttonSize), GUILayout.Width(buttonSize * 2f)))
                 {
-                    doMove.lookAtTarget = null;
+                    doJump.lookAtTarget = null;
                 }
 
                 EditorGUILayout.EndHorizontal();
@@ -238,41 +238,15 @@ namespace DOTweenModular2D.Editor
 
             serializedObject.ApplyModifiedProperties();
 
-            if (tabStates[6])
-            {
-                EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-
-                // Draw Editor
-                editorFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(editorFoldout, "Editor");
-                EditorPrefs.SetBool(savedEditorFoldout, editorFoldout);
-                if (editorFoldout)
-                {
-                    EditorGUI.indentLevel++;
-
-                    EditorGUILayout.BeginVertical("HelpBox");
-                    EditorGUILayout.Space();
-
-                    DrawEditorProperties();
-
-                    EditorGUILayout.Space();
-                    EditorGUILayout.EndVertical();
-
-
-                    EditorGUI.indentLevel--;
-                }
-                EditorGUILayout.EndFoldoutHeaderGroup();
-            }
-
+            if (EditorApplication.isPlaying)
+                return;
+            
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-
-            DrawEditButton();
-
-            if (!EditorApplication.isPlaying)
-                DrawPreviewButtons();
-
-            DrawResetEditorPropertiesButton();
+                        
+            DrawPreviewButtons();
 
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
@@ -280,32 +254,44 @@ namespace DOTweenModular2D.Editor
 
         private void OnSceneGUI()
         {
-            if (doMove.begin == Begin.After ||
-                doMove.begin == Begin.With)
+            if (doJump.begin == Begin.After ||
+                doJump.begin == Begin.With)
             {
                 Handles.color = Color.white;
 
-                if (doMove.tweenObject != null)
+                if (doJump.tweenObject != null)
                     DrawLineToTweenObject();
             }
 
             Color handleColor = color[currentHandleColorIndex];
             Color lineColor = color[currentLineColorIndex];
 
+            Vector2 handlePosition;
 
-            Vector3 startPosition;
-
-            if (EditorApplication.isPlaying)
-                startPosition = beginPosition;
-            else if (TweenPreviewing)
-                startPosition = positionBeforePreview;
+            if (doJump.useLocal)
+            {
+                if (doJump.transform.parent == null)
+                {
+                    handlePosition = doJump.targetPosition;
+                }
+                else
+                {
+                    handlePosition = doJump.transform.parent.TransformPoint(doJump.targetPosition);                    
+                }
+            }
             else
-                startPosition = doMove.transform.position;
+            {
+                if (doJump.relative)
+                {
+                    handlePosition = (Vector2)doJump.transform.position + doJump.targetPosition;
+                }
+                else
+                {
+                    handlePosition = doJump.targetPosition;
+                }
+            }
 
-            Vector3 handlePosition = CalculateTargetPosition(startPosition);
-            DrawTargetLineAndSphere(startPosition, handlePosition, lineColor);
-
-            if (doMove.lookAt != LookAtSimple.None)
+            if (doJump.lookAt != LookAtSimple.None)
             {
                 DrawLookAtLine(lineColor);
                 DrawRotationClampCircle();
@@ -315,7 +301,7 @@ namespace DOTweenModular2D.Editor
             {
                 DrawTargetHandle(handlePosition, handleColor);
 
-                if (doMove.lookAt == LookAtSimple.Position)
+                if (doJump.lookAt == LookAtSimple.Position)
                     DrawLookAtHandle();
             }
 
@@ -323,70 +309,62 @@ namespace DOTweenModular2D.Editor
 
         #endregion
 
-        private Vector3 CalculateTargetPosition(Vector2 startPosition)
-        {
-            Vector3 handlePosition;
+        //private Vector3 CalculateTargetPosition(Vector2 startPosition)
+        //{
+        //    Vector3 handlePosition;
 
-            if (doMove.useLocal)
-            {
-                if (doMove.transform.parent != null)
-                {
-                    handlePosition = doMove.transform.parent.TransformPoint(doMove.targetPosition);
-                }
-                else
-                {
-                    handlePosition = doMove.targetPosition;
-                }
-            }
+        //    if (doJump.useLocal)
+        //    {
+        //        if (doJump.transform.parent != null)
+        //        {
+        //            handlePosition = doJump.transform.parent.TransformPoint(doJump.targetPosition);
+        //        }
+        //        else
+        //        {
+        //            handlePosition = doJump.targetPosition;
+        //        }
+        //    }
 
-            else
-            {
+        //    else
+        //    {
 
-                if (doMove.relative)
-                {
-                    if (firstTimeRelative)
-                    {
-                        doMove.targetPosition = doMove.targetPosition - (Vector2)doMove.transform.position;
+        //        if (doJump.relative)
+        //        {
+        //            if (firstTimeRelative)
+        //            {
+        //                doJump.targetPosition = doJump.targetPosition - (Vector2)doJump.transform.position;
 
-                        firstTimeRelative = false;
-                        EditorPrefs.SetBool(savedFirstTimeRelative, firstTimeRelative);
-                    }
+        //                firstTimeRelative = false;
+        //                EditorPrefs.SetBool(savedFirstTimeRelative, firstTimeRelative);
+        //            }
 
-                    handlePosition = startPosition + doMove.targetPosition;
+        //            handlePosition = startPosition + doJump.targetPosition;
 
-                    firstTimeNonRelative = true;
-                    EditorPrefs.SetBool(savedFirstTimeNonRelative, firstTimeNonRelative);
-                }
-                else
-                {
-                    if (firstTimeNonRelative)
-                    {
-                        doMove.targetPosition = doMove.targetPosition + (Vector2)doMove.transform.position;
+        //            firstTimeNonRelative = true;
+        //            EditorPrefs.SetBool(savedFirstTimeNonRelative, firstTimeNonRelative);
+        //        }
+        //        else
+        //        {
+        //            if (firstTimeNonRelative)
+        //            {
+        //                doJump.targetPosition = doJump.targetPosition + (Vector2)doJump.transform.position;
 
-                        firstTimeNonRelative = false;
-                        EditorPrefs.SetBool(savedFirstTimeNonRelative, firstTimeNonRelative);
-                    }
+        //                firstTimeNonRelative = false;
+        //                EditorPrefs.SetBool(savedFirstTimeNonRelative, firstTimeNonRelative);
+        //            }
 
-                    handlePosition = doMove.targetPosition;
+        //            handlePosition = doJump.targetPosition;
 
-                    firstTimeRelative = true;
-                    EditorPrefs.SetBool(savedFirstTimeRelative, firstTimeRelative);
-                }
+        //            firstTimeRelative = true;
+        //            EditorPrefs.SetBool(savedFirstTimeRelative, firstTimeRelative);
+        //        }
 
-            }
+        //    }
 
-            return handlePosition;
-        }
+        //    return handlePosition;
+        //}
 
-        #region Draw Functions
-
-        private void DrawTargetLineAndSphere(Vector3 startPosition, Vector3 endPosition, Color lineColor)
-        {
-            Handles.color = lineColor;
-
-            Handles.SphereHandleCap(2, endPosition, Quaternion.identity, currentHandleRadius, EventType.Repaint);
-            Handles.DrawLine(startPosition, endPosition, currentLineWidth);
-        }
+        #region Draw Sceneview Functions
 
         private void DrawTargetHandle(Vector3 handlePosition, Color handleColor)
         {
@@ -406,60 +384,60 @@ namespace DOTweenModular2D.Editor
             if (newHandlePosition != handlePosition)
             {
                 // Register the current object for undo
-                Undo.RecordObject(doMove, "Move Handle");
+                Undo.RecordObject(doJump, "Move Handle");
 
                 // Perform the handle move and update the serialized data
                 Vector2 delta = newHandlePosition - handlePosition;
-                doMove.targetPosition += delta;
-            }
-        }
-
-        private void DrawLookAtLine(Color lineColor)
-        {
-            Handles.color = lineColor;
-
-            if (doMove.lookAt == LookAtSimple.Position)
-            {
-                Handles.DrawDottedLine(doMove.transform.position, doMove.lookAtPosition, 5f);
-            }
-            else if (doMove.lookAtTarget != null)
-            {
-                Handles.DrawDottedLine(doMove.transform.position, doMove.lookAtTarget.position, 5f);
+                doJump.targetPosition += delta;
             }
         }
 
         private void DrawRotationClampCircle()
         {
-            Vector3 position = doMove.transform.position;
+            Vector3 position = doJump.transform.position;
 
             // Calculate the endpoints of the arc based on the min and max angles
-            float minAngle = (doMove.min + 90) * Mathf.Deg2Rad;
-            float maxAngle = (doMove.max + 90) * Mathf.Deg2Rad;
+            float minAngle = (doJump.min + 90) * Mathf.Deg2Rad;
+            float maxAngle = (doJump.max + 90) * Mathf.Deg2Rad;
             Vector3 minDir = new Vector3(Mathf.Cos(minAngle), Mathf.Sin(minAngle), 0);
             Vector3 maxDir = new Vector3(Mathf.Cos(maxAngle), Mathf.Sin(maxAngle), 0);
 
             // Draw the circle representing the range
-            Handles.DrawWireArc(position, Vector3.forward, minDir, doMove.max - doMove.min, 2f);
+            Handles.DrawWireArc(position, Vector3.forward, minDir, doJump.max - doJump.min, 2f);
 
             // Draw lines from the center to the min and max angles
             Handles.DrawLine(position, position + minDir * 2f);
             Handles.DrawLine(position, position + maxDir * 2f);
         }
 
+        private void DrawLookAtLine(Color lineColor)
+        {
+            Handles.color = lineColor;
+
+            if (doJump.lookAt == LookAtSimple.Position)
+            {
+                Handles.DrawDottedLine(doJump.transform.position, doJump.lookAtPosition, 5f);
+            }
+            else if (doJump.lookAtTarget != null)
+            {
+                Handles.DrawDottedLine(doJump.transform.position, doJump.lookAtTarget.position, 5f);
+            }
+        }
+
         private void DrawLookAtHandle()
         {
-            Vector2 newLookAtPosition = Handles.PositionHandle(doMove.lookAtPosition, Quaternion.identity);
+            Vector2 newLookAtPosition = Handles.PositionHandle(doJump.lookAtPosition, Quaternion.identity);
 
-            if (newLookAtPosition != doMove.lookAtPosition)
+            if (newLookAtPosition != doJump.lookAtPosition)
             {
-                Undo.RecordObject(doMove, "lookAtPosition Handle");
-                doMove.lookAtPosition = newLookAtPosition;
+                Undo.RecordObject(doJump, "lookAtPosition Handle");
+                doJump.lookAtPosition = newLookAtPosition;
             }
         }
 
         #endregion
 
-        #region Inspector Draw Functions
+        #region Draw Inspector Functions
 
         private void DrawTabs()
         {
@@ -468,7 +446,7 @@ namespace DOTweenModular2D.Editor
             GUIStyle toggleStyle = new GUIStyle(EditorStyles.miniButton);
             toggleStyle.fixedHeight = 30f;
 
-            string[] tabNames = new string[] { "Life", "Type", "Move", "Look At", "Values", "Events", "Editor" };
+            string[] tabNames = new string[] { "Life", "Type", "Jump", "Look At", "Values", "Events" };
 
             for (int i = 0; i < tabStates.Length; i++)
             {
@@ -484,12 +462,14 @@ namespace DOTweenModular2D.Editor
             GUILayout.EndHorizontal();
         }
 
-        private void DrawMoveSettings()
+        private void DrawJumpSettings()
         {
-            EditorGUILayout.PropertyField(speedBasedProp);
+            EditorGUILayout.PropertyField(jumpPowerProp);
+            EditorGUILayout.PropertyField(jumpsProp);
             EditorGUILayout.PropertyField(useLocalProp);
-            EditorGUILayout.PropertyField(relativeProp);
-            EditorGUILayout.PropertyField(snappingProp);
+            
+            if (!doJump.useLocal) 
+                EditorGUILayout.PropertyField(relativeProp);
         }
 
         private void DrawLookAtSettings()
@@ -518,6 +498,8 @@ namespace DOTweenModular2D.Editor
         protected override void DrawValues()
         {
             EditorGUILayout.PropertyField(targetPositionProp);
+            EditorGUILayout.PropertyField(snappingProp);
+
             base.DrawValues();
         }
 
@@ -525,29 +507,11 @@ namespace DOTweenModular2D.Editor
 
         #region Setup Functions
 
-        protected override void SetupSerializedProperties()
+        protected override void SetupSavedVariables(DOBase doBase)
         {
-            base.SetupSerializedProperties();
-            speedBasedProp = serializedObject.FindProperty("speedBased");
-            useLocalProp = serializedObject.FindProperty("useLocal");
-            relativeProp = serializedObject.FindProperty("relative");
-            snappingProp = serializedObject.FindProperty("snapping");
-            targetPositionProp = serializedObject.FindProperty("targetPosition");
+            base.SetupSavedVariables(doBase);
 
-            lookAtProp = serializedObject.FindProperty("lookAt");
-            lookAtTargetProp = serializedObject.FindProperty("lookAtTarget");
-            lookAtPositionProp = serializedObject.FindProperty("lookAtPosition");
-            minProp = serializedObject.FindProperty("min");
-            maxProp = serializedObject.FindProperty("max");
-            offsetProp = serializedObject.FindProperty("offset");
-            smoothFactorProp = serializedObject.FindProperty("smoothFactor");
-        }
-
-        protected override void SetupSavedVariables(DOBase doMove)
-        {
-            base.SetupSavedVariables(doMove);
-
-            int instanceId = doMove.GetInstanceID();
+            int instanceId = doJump.GetInstanceID();
 
             savedFirstTimeNonRelative = "DOMoveEditor_firstTimeNonRelative_" + instanceId;
             firstTimeNonRelative = EditorPrefs.GetBool(savedFirstTimeNonRelative, false);
@@ -555,22 +519,39 @@ namespace DOTweenModular2D.Editor
             savedFirstTimeRelative = "DOMoveEditor_firstTimeRelative_" + instanceId;
             firstTimeRelative = EditorPrefs.GetBool(savedFirstTimeRelative, true);
 
-            savedMoveSettingsFoldout = "DOMoveEditor_moveSettingsFoldout_" + instanceId;
-            moveSettingsFoldout = EditorPrefs.GetBool(savedMoveSettingsFoldout, true);
-
-            savedLookAtSettingsFoldout = "DOMoveEditor_lookAtSettingsFoldout_" + instanceId;
-            lookAtSettingsFoldout = EditorPrefs.GetBool(savedLookAtSettingsFoldout, true);
+            savedJumpSettingsFoldout = "DoJumpEditor_jumpSettingsFoldout_" + instanceId;
+            jumpSettingsFoldout = EditorPrefs.GetBool(savedJumpSettingsFoldout, true);
 
             for (int i = 0; i < savedTabStates.Length; i++)
             {
-                savedTabStates[i] = "DOMoveEditor_tabStates_" + i + " " + instanceId;
+                savedTabStates[i] = "DOJumpEditor_tabStates_" + i + " " + instanceId;
                 tabStates[i] = EditorPrefs.GetBool(savedTabStates[i], true);
             }
         }
 
+        protected override void SetupSerializedProperties()
+        {
+            base.SetupSerializedProperties();
+
+            jumpPowerProp = serializedObject.FindProperty("jumpPower");
+            jumpsProp = serializedObject.FindProperty("jumps");
+            useLocalProp = serializedObject.FindProperty("useLocal");
+            relativeProp = serializedObject.FindProperty("relative");
+
+            targetPositionProp = serializedObject.FindProperty("targetPosition");
+            snappingProp = serializedObject.FindProperty("snapping");
+
+            lookAtProp = serializedObject.FindProperty("lookAt");
+            lookAtTargetProp = serializedObject.FindProperty("lookAtTarget");
+            lookAtPositionProp = serializedObject.FindProperty("lookAtPosition");
+            offsetProp = serializedObject.FindProperty("offset");
+            minProp = serializedObject.FindProperty("min");
+            maxProp = serializedObject.FindProperty("max");
+            smoothFactorProp = serializedObject.FindProperty("smoothFactor");
+        }
+
         #endregion
-
     }
-
 }
+
 #endif
