@@ -1,10 +1,3 @@
-## [2.0.1] - 2023-08-28
-### Added
-- Scene view labels in DOSequence Editor
-
-### Changed
-- Minimum number of jumps in DOJump
-
 ## [2.0.0] - 2023-08-27
 ### Added
 - DOJump component
