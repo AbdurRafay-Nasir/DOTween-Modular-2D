@@ -1,3 +1,12 @@
+## [2.0.2] - 2023-08-30
+### Added
+- Undo/Redo functionality for Editor Properties
+- Begin Text in scene view
+- Arrow for Begin Property in scene view
+
+### Fixed
+- Postion/Rotation/Scale not resetting after Tween preview, with look at set
+
 ## [2.0.1] - 2023-08-28
 ### Added
 - Scene view labels in DOSequence Editor

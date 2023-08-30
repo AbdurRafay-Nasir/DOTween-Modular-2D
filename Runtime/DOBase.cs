@@ -7,6 +7,8 @@ namespace DOTweenModular2D
 {
     public abstract class DOBase : MonoBehaviour
     {
+        #region Properties
+
         [Tooltip("When this tween should start")]
         public Begin begin;
 
@@ -42,21 +44,32 @@ namespace DOTweenModular2D
         [Tooltip("How long this tween will play")]
         [Min(0)] public float duration = 1;
 
+        #endregion
+
+        #region Unity Events
+
         // Events
         /// <summary>
         /// Called when this tween is created
         /// </summary>
-        public UnityEvent<DOBase> onTweenCreated;
+        public UnityEvent onTweenCreated;
+
+        /// <summary>
+        /// Called the first time this tween starts
+        /// </summary>
+        public UnityEvent onTweenStarted;
 
         /// <summary>
         /// Called when this tween completes, in-case of infinite loops this will not invoke
         /// </summary>
-        public UnityEvent<DOBase> onTweenCompleted;
+        public UnityEvent onTweenCompleted;
 
         /// <summary>
         /// Called when this tween is Killed, in-case of infinite loops this will not invoke
         /// </summary>
-        public UnityEvent<DOBase> onTweenKilled;
+        public UnityEvent onTweenKilled;
+
+        #endregion
 
         /// <summary>
         /// Must assign this to custom tween that you create 
@@ -75,7 +88,7 @@ namespace DOTweenModular2D
                 tweenObject.onTweenCompleted.AddListener(OnStartAfterTweenCompleted);
 
             else if (begin == Begin.With)
-                tweenObject.onTweenCreated.AddListener(OnStartWithTweenCreated);
+                tweenObject.onTweenStarted.AddListener(OnStartWithTweenStarted);
         }
 
         private void Start()
@@ -89,6 +102,7 @@ namespace DOTweenModular2D
             if (begin != Begin.OnSceneStart) return;
 
             tween.Play();
+            onTweenStarted?.Invoke();
         }
 
         private void OnBecameVisible()
@@ -98,6 +112,7 @@ namespace DOTweenModular2D
 
             visible = true;
             tween.Play();
+            onTweenStarted?.Invoke();
         }
 
         private void OnBecameInvisible()
@@ -106,7 +121,7 @@ namespace DOTweenModular2D
             if (tween == null) return;
             if (!tween.playedOnce) return;
 
-            onTweenKilled?.Invoke(this);
+            onTweenKilled?.Invoke();
             ClearTweenCallbacks();
             tween.Kill();
             tween = null;
@@ -122,13 +137,14 @@ namespace DOTweenModular2D
 
             enteredTrigger = true;
             tween.Play();
+            onTweenStarted?.Invoke();
         }
 
         protected void OnDestroy()
         {
             if (tween != null)
             {
-                onTweenKilled?.Invoke(this);
+                onTweenKilled?.Invoke();
                 ClearTweenCallbacks();
                 tween.Kill();
                 tween = null;
@@ -137,11 +153,13 @@ namespace DOTweenModular2D
             tweenObject = null;
 
             onTweenCreated?.RemoveAllListeners();
+            onTweenStarted?.RemoveAllListeners();
             onTweenCompleted?.RemoveAllListeners();
         }
 
         /// <summary>
-        /// Implement this method for your custom tween  
+        /// Implement this method for your custom tween <b/>
+        /// Must Call InvokeTweenCreated() once custom tween is created
         /// </summary>
         public abstract void CreateTween();
 
@@ -151,10 +169,10 @@ namespace DOTweenModular2D
         protected void InvokeTweenCreated()
         {
             onTweenCreated.AddListener(OnTweenCreated);
-            onTweenCreated?.Invoke(this);
+            onTweenCreated?.Invoke();
         }
 
-        private void OnTweenCreated(DOBase doBase)
+        private void OnTweenCreated()
         {
             tween.onComplete += OnTweenCompleted;
             onTweenCreated.RemoveListener(OnTweenCreated);
@@ -162,12 +180,13 @@ namespace DOTweenModular2D
 
         private void OnTweenCompleted()
         {
-            onTweenCompleted?.Invoke(this);
+            onTweenCompleted?.Invoke();
             tween.onComplete -= OnTweenCompleted;
 
             if (kill == Kill.OnTweenComplete)
             {
-                onTweenKilled?.Invoke(this);
+                onTweenKilled?.Invoke();
+
                 ClearTweenCallbacks();
                 tween.Kill();
                 tween = null;
@@ -177,33 +196,35 @@ namespace DOTweenModular2D
             }
         }
 
-        private void OnStartWithTweenCreated(DOBase doBase)
+        private void OnStartWithTweenStarted()
         {
             CreateTween();
             tween.Play();
+            onTweenStarted?.Invoke();
 
-            tweenObject.onTweenCreated.RemoveListener(OnStartWithTweenCreated);
+            tweenObject.onTweenStarted.RemoveListener(OnStartWithTweenStarted);
         }
 
-        private void OnStartAfterTweenCompleted(DOBase doBase)
+        private void OnStartAfterTweenCompleted()
         {
             CreateTween();
             tween.Play();
+            onTweenStarted?.Invoke();
 
             tweenObject.onTweenCompleted.RemoveListener(OnStartAfterTweenCompleted);
         }
 
         private void ClearTweenCallbacks()
         {
-            Tween.OnComplete(null);
-            Tween.OnKill(null);
-            Tween.OnPause(null);
-            Tween.OnPlay(null);
-            Tween.OnRewind(null);
-            Tween.OnStart(null);
-            Tween.OnStepComplete(null);
-            Tween.OnUpdate(null);
-            Tween.OnWaypointChange(null);
+            tween.OnPause(null);
+            tween.OnPlay(null);
+            tween.OnRewind(null);
+            tween.OnStart(null);
+            tween.OnStepComplete(null);
+            tween.OnUpdate(null);
+            tween.OnWaypointChange(null);
+            tween.OnComplete(null);
+            tween.OnKill(null);
         }
     }
 }

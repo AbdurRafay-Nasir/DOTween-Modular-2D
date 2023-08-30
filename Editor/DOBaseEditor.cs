@@ -40,6 +40,8 @@ namespace DOTweenModular2D.Editor
         private Quaternion rotationBeforePreview;
         private Vector3 scaleBeforePreview;
 
+        protected Kill killTypeBeforePreview;
+
         protected const float buttonSize = 40;
 
         #region Handle Properties
@@ -58,33 +60,35 @@ namespace DOTweenModular2D.Editor
 
         protected Color[] color = new Color[]
         {
-        Color.black,
-        Color.blue,
-        Color.clear,
-        Color.cyan,
-        Color.gray,
-        Color.green,
-        Color.magenta,
-        Color.red,
-        Color.white,
-        Color.yellow,
+            Color.black,
+            Color.blue,
+            Color.clear,
+            Color.cyan,
+            Color.gray,
+            Color.green,
+            Color.magenta,
+            Color.red,
+            Color.white,
+            Color.yellow,
         };
 
         private string[] colorDropdown = new string[]
         {
-        "Black",
-        "Blue",
-        "Clear",
-        "Cyan",
-        "Gray",
-        "Green",
-        "Magenta",
-        "Red",
-        "White",
-        "Yellow"
+            "Black",
+            "Blue",
+            "Clear",
+            "Cyan",
+            "Gray",
+            "Green",
+            "Magenta",
+            "Red",
+            "White",
+            "Yellow"
         };
 
         private string[] handleDropdown = new string[] { "Position", "Free" };
+
+        private EditorProperties editorProperties;
 
         #endregion
 
@@ -141,6 +145,7 @@ namespace DOTweenModular2D.Editor
         protected virtual void SetupSavedVariables(DOBase doBase)
         {
             this.doBase = doBase;
+            editorProperties = CreateInstance<EditorProperties>();
 
             SetupSavedVariablesPath(doBase);
 
@@ -179,11 +184,11 @@ namespace DOTweenModular2D.Editor
             editorFoldout = EditorPrefs.GetBool(savedEditorFoldout, false);
 
             // Apply saved values to Editor Properties
-            currentHandleIndex = EditorPrefs.GetInt(savedHandleIndex, 0);
-            currentHandleColorIndex = EditorPrefs.GetInt(savedHandleColorIndex, 5);
-            currentLineColorIndex = EditorPrefs.GetInt(savedLineColorIndex, 5);
-            currentHandleRadius = EditorPrefs.GetFloat(savedHandleRadius, 0.5f);
-            currentLineWidth = EditorPrefs.GetFloat(savedLineWidth, 1f);
+            editorProperties.handleIndex = EditorPrefs.GetInt(savedHandleIndex, 0);
+            editorProperties.handleColorIndex = EditorPrefs.GetInt(savedHandleColorIndex, 5);
+            editorProperties.handleRadius = EditorPrefs.GetFloat(savedHandleRadius, 0.5f);
+            editorProperties.lineColorIndex = EditorPrefs.GetInt(savedLineColorIndex, 5);
+            editorProperties.lineWidth = EditorPrefs.GetFloat(savedLineWidth, 1f);
 
             // Apply saved values to Inspector Button Properties
             editPath = EditorPrefs.GetBool(savedEditPath, true);
@@ -210,6 +215,38 @@ namespace DOTweenModular2D.Editor
             EditorGUILayout.PropertyField(killProp);
             EditorGUILayout.PropertyField(destroyComponentProp);
             EditorGUILayout.PropertyField(destroyGameObjectProp);
+        }
+
+        /// <summary>
+        /// Draws Helpbox for Inspector messages regarding tweenObject and Begin property
+        /// </summary>
+        protected void DrawTweenObjectHelpBox()
+        {
+            if ((Begin)beginProp.enumValueIndex == Begin.After ||
+                (Begin)beginProp.enumValueIndex == Begin.With)
+            {
+                if (tweenObjectProp.objectReferenceValue == null)
+                    EditorGUILayout.HelpBox("Tween Object is not assigned", MessageType.Error);
+            }
+            else
+            {
+                if (tweenObjectProp.objectReferenceValue != null)
+                {
+                    EditorGUILayout.BeginHorizontal();
+
+                    EditorGUILayout.HelpBox("Tween Object is assigned, it should be removed", MessageType.Warning);
+
+                    GUIContent trashButton = EditorGUIUtility.IconContent("TreeEditor.Trash");
+                    trashButton.tooltip = "Remove Tween Object";
+
+                    if (GUILayout.Button(trashButton, GUILayout.Height(buttonSize), GUILayout.Width(buttonSize * 2f)))
+                    {
+                        tweenObjectProp.objectReferenceValue = null;
+                    }
+
+                    EditorGUILayout.EndHorizontal();
+                }
+            }
         }
 
         /// <summary>
@@ -262,30 +299,52 @@ namespace DOTweenModular2D.Editor
         /// </summary>
         protected void DrawEditorProperties()
         {
-            currentHandleIndex = EditorGUILayout.Popup("Handle", currentHandleIndex, handleDropdown);
-            EditorPrefs.SetInt(savedHandleIndex, currentHandleIndex);
-
-            currentHandleColorIndex = EditorGUILayout.Popup("Handle Color", currentHandleColorIndex, colorDropdown);
-            EditorPrefs.SetInt(savedHandleColorIndex, currentHandleColorIndex);
-
-            EditorGUI.BeginChangeCheck();
-            currentHandleRadius = EditorGUILayout.Slider("Handle Radius", currentHandleRadius, 0.5f, 3f);
-            EditorPrefs.SetFloat(savedHandleRadius, currentHandleRadius);
-
-            if (EditorGUI.EndChangeCheck())
+            currentHandleIndex = EditorGUILayout.Popup("Handle", editorProperties.handleIndex, handleDropdown);
+            if (currentHandleIndex != editorProperties.handleIndex)
             {
+                Undo.RecordObject(editorProperties, "handleIndex");
+                editorProperties.handleIndex = currentHandleIndex;
+
+                EditorPrefs.SetInt(savedHandleIndex, currentHandleIndex);
+            }
+
+            currentHandleColorIndex = EditorGUILayout.Popup("Handle Color", editorProperties.handleColorIndex, colorDropdown);
+            if (currentHandleColorIndex != editorProperties.handleColorIndex)
+            {
+                Undo.RecordObject(editorProperties, "handleColorIndex");
+                editorProperties.handleColorIndex = currentHandleColorIndex;
+                
+                EditorPrefs.SetInt(savedHandleColorIndex, currentHandleColorIndex);
+            }
+
+            currentHandleRadius = EditorGUILayout.Slider("Handle Radius", editorProperties.handleRadius, 0.5f, 3f);
+            if (currentHandleRadius != editorProperties.handleRadius)
+            {
+                Undo.RecordObject(editorProperties, "handleRadius");
+                editorProperties.handleRadius = currentHandleRadius;
+
+                EditorPrefs.SetFloat(savedHandleRadius, currentHandleRadius);
+                
                 SceneView.RepaintAll();
             }
 
-            currentLineColorIndex = EditorGUILayout.Popup("Line Color", currentLineColorIndex, colorDropdown);
-            EditorPrefs.SetInt(savedLineColorIndex, currentLineColorIndex);
-
-            EditorGUI.BeginChangeCheck();
-            currentLineWidth = EditorGUILayout.Slider("Line Width", currentLineWidth, 1f, 20f);
-            EditorPrefs.SetFloat(savedLineWidth, currentLineWidth);
-
-            if (EditorGUI.EndChangeCheck())
+            currentLineColorIndex = EditorGUILayout.Popup("Line Color", editorProperties.lineColorIndex, colorDropdown);
+            if (currentLineColorIndex != editorProperties.lineColorIndex)
             {
+                Undo.RecordObject(editorProperties, "lineColor");
+                editorProperties.lineColorIndex = currentLineColorIndex;
+                
+                EditorPrefs.SetInt(savedLineColorIndex, currentLineColorIndex);
+            }
+
+            currentLineWidth = EditorGUILayout.Slider("Line Width", editorProperties.lineWidth, 1f, 20f);
+            if (currentLineWidth != editorProperties.lineColorIndex)
+            {
+                Undo.RecordObject(editorProperties, "lineWidth");
+                editorProperties.lineWidth = currentLineWidth;
+
+                EditorPrefs.SetFloat(savedLineWidth, currentLineWidth);
+                
                 SceneView.RepaintAll();
             }
         }
@@ -318,11 +377,20 @@ namespace DOTweenModular2D.Editor
 
             if (GUILayout.Button(resetButton, GUILayout.Height(buttonSize), GUILayout.Width(buttonSize)))
             {
-                currentHandleIndex = 0;
-                currentHandleColorIndex = 5;
-                currentHandleRadius = 0.5f;
-                currentLineColorIndex = 5;
-                currentLineWidth = 1f;
+                editorProperties.handleIndex = 0;
+                EditorPrefs.SetInt(savedHandleIndex, editorProperties.handleIndex);
+
+                editorProperties.handleColorIndex = 5;
+                EditorPrefs.SetInt(savedHandleColorIndex, editorProperties.handleColorIndex);
+
+                editorProperties.handleRadius = 0.5f;
+                EditorPrefs.SetFloat(savedHandleRadius, editorProperties.handleRadius);
+
+                editorProperties.lineColorIndex = 5;
+                EditorPrefs.SetInt(savedLineColorIndex, editorProperties.lineColorIndex);
+
+                editorProperties.lineWidth = 1f;
+                EditorPrefs.SetFloat(savedLineWidth, editorProperties.lineWidth);
 
                 SceneView.RepaintAll();
             }
@@ -333,23 +401,48 @@ namespace DOTweenModular2D.Editor
         #region Preview Functions
 
         /// <summary>
-        /// Draws a line to Tween Object, does not have null check you have to do it yourself
+        /// Draws complete lines to backward Tween Objects, also displays arrow head and Begin Property
         /// </summary>
-        protected void DrawLineToTweenObject()
+        protected void DrawTweenObjectInfo()
         {
-            DOBase tweenObj = (DOBase)tweenObjectProp.objectReferenceValue;
-            Vector2 lineStart = doBase.transform.position;
+            Handles.color = Color.cyan;
 
-            Handles.DrawLine(lineStart, tweenObj.transform.position);
+            DOBase tweenObj = (DOBase)tweenObjectProp.objectReferenceValue;
+
+            Vector2 lineStart = doBase.transform.position;
+            Vector2 lineEnd = tweenObj.transform.position;
+
+            Handles.DrawLine(lineStart, lineEnd);
+
+            Vector2 midPoint = (lineStart + lineEnd) * 0.5f;
+            string text = doBase.begin.ToString();
+            Handles.Label(midPoint, text);
+
+            const float arrowOffset = 0.7f;
+            Vector2 arrowPosition = midPoint + arrowOffset * (lineStart - midPoint);
+
+            Vector2 arrowDirection = lineStart - midPoint;
+
+            Handles.ConeHandleCap(10, arrowPosition, Quaternion.LookRotation(arrowDirection), 0.5f, EventType.Repaint);
 
             while ((tweenObj.begin == Begin.After || tweenObj.begin == Begin.With)
                      && tweenObj.tweenObject != null)
             {
-                lineStart = tweenObj.transform.position;
+                text = tweenObj.begin.ToString();
 
+                lineStart = tweenObj.transform.position;
                 tweenObj = tweenObj.tweenObject;
 
-                Handles.DrawLine(lineStart, tweenObj.transform.position);
+                lineEnd = tweenObj.transform.position;
+
+                Handles.DrawLine(lineStart, lineEnd);
+
+                midPoint = (lineStart + lineEnd) * 0.5f;                
+                Handles.Label(midPoint, text);
+
+                arrowPosition = midPoint + arrowOffset * (lineStart - midPoint);
+                arrowDirection = lineStart - midPoint;
+                Handles.ConeHandleCap(10, arrowPosition, Quaternion.LookRotation(arrowDirection), 0.5f, EventType.Repaint);
             }
         }
 
@@ -370,7 +463,9 @@ namespace DOTweenModular2D.Editor
             {
                 DOTweenEditorPreview.Stop(true);
                 ClearTweenCallbacks();
-                ApplySavedTransform();
+                ApplySavedValues();
+
+                doBase.kill = killTypeBeforePreview;
             }
 
             // if tween is not previewing enable playButton
@@ -380,9 +475,12 @@ namespace DOTweenModular2D.Editor
                 SaveDefaultTransform();
                 TweenPreviewing = true;
 
+                killTypeBeforePreview = doBase.kill;
+                doBase.kill = Kill.Manual;
+
                 doBase.CreateTween();
-                doBase.Tween.onComplete += ClearTweenCallbacks;
-                doBase.Tween.onComplete += ApplySavedTransform;
+                doBase.Tween.onKill += ApplySavedValues;
+                doBase.Tween.onKill += ClearTweenCallbacks;
                 DOTweenEditorPreview.PrepareTweenForPreview(doBase.Tween, false, false);
                 DOTweenEditorPreview.Start();
             }
@@ -390,7 +488,6 @@ namespace DOTweenModular2D.Editor
 
         private void ClearTweenCallbacks()
         {
-            doBase.Tween.OnComplete(null);
             doBase.Tween.OnKill(null);
             doBase.Tween.OnPause(null);
             doBase.Tween.OnPlay(null);
@@ -399,15 +496,18 @@ namespace DOTweenModular2D.Editor
             doBase.Tween.OnStepComplete(null);
             doBase.Tween.OnUpdate(null);
             doBase.Tween.OnWaypointChange(null);
-
-            TweenPreviewing = false;
+            doBase.Tween.OnComplete(null);
         }
 
-        private void ApplySavedTransform()
+        private void ApplySavedValues()
         {
             doBase.transform.position = positionBeforePreview;
             doBase.transform.rotation = rotationBeforePreview;
             doBase.transform.localScale = scaleBeforePreview;
+
+            TweenPreviewing = false;
+
+            doBase.kill = killTypeBeforePreview;
         }
 
         private void SaveDefaultTransform()
@@ -419,38 +519,16 @@ namespace DOTweenModular2D.Editor
 
         #endregion
 
-        /// <summary>
-        /// Draws Helpbox for Inspector messages regarding tweenObject and Begin property
-        /// </summary>
-        protected void DrawTweenObjectHelpBox()
-        {
-            if ((Begin)beginProp.enumValueIndex == Begin.After ||
-                (Begin)beginProp.enumValueIndex == Begin.With)
-            {
-                if (tweenObjectProp.objectReferenceValue == null)
-                    EditorGUILayout.HelpBox("Tween Object is not assigned", MessageType.Error);
-            }
-            else
-            {
-                if (tweenObjectProp.objectReferenceValue != null)
-                {
-                    EditorGUILayout.BeginHorizontal();
+    }
 
-                    EditorGUILayout.HelpBox("Tween Object is assigned, it should be removed", MessageType.Warning);
+    public class EditorProperties : ScriptableObject
+    {
+        public int handleIndex;
+        public int handleColorIndex;
+        public float handleRadius;
 
-                    GUIContent trashButton = EditorGUIUtility.IconContent("TreeEditor.Trash");
-                    trashButton.tooltip = "Remove Tween Object";
-
-                    if (GUILayout.Button(trashButton, GUILayout.Height(buttonSize), GUILayout.Width(buttonSize * 2f)))
-                    {
-                        tweenObjectProp.objectReferenceValue = null;
-                    }
-
-                    EditorGUILayout.EndHorizontal();
-                }
-            }
-        }
-
+        public int lineColorIndex;
+        public float lineWidth;
     }
 
 }
