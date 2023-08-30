@@ -1,3 +1,4 @@
+
 # DOTween Modular 2D
 Collection of Modular components for DOTween
 
@@ -26,6 +27,7 @@ Collection of Modular components for DOTween
 - Window -> Package Manager -> In Project -> DOTween Modular 2D -> Remove 
 -  Add linkedgames.dotweenmoudular2d asmdef reference at com.linkedgames.dotweenmodular2d -> Editor -> linkedgames.dotweenmoudular2d.Editor, Click Apply
 (Remove any previous reference)
+
 Now You are ready to use DOTween Modular 2D, also you can rename com.linkedgames.dotweenmodular2d
 
 ## Issues
