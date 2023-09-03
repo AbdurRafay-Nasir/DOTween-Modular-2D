@@ -9,7 +9,6 @@ namespace DOTweenModular2D.Editor
     using UnityEngine;
     using UnityEditor;
 
-    [CustomEditor(typeof(DOBase)), CanEditMultipleObjects]
     public class DOBaseEditor : Editor
     {
 
@@ -20,6 +19,7 @@ namespace DOTweenModular2D.Editor
         protected SerializedProperty killProp;
         protected SerializedProperty destroyComponentProp;
         protected SerializedProperty destroyGameObjectProp;
+
         protected SerializedProperty delayProp;
         protected SerializedProperty tweenTypeProp;
         protected SerializedProperty loopTypeProp;
@@ -27,7 +27,9 @@ namespace DOTweenModular2D.Editor
         private SerializedProperty curveProp;
         protected SerializedProperty loopsProp;
         protected SerializedProperty durationProp;
+
         private SerializedProperty onTweenCreatedProp;
+        private SerializedProperty onTweenStartedProp;
         private SerializedProperty onTweenCompletedProp;
         private SerializedProperty onTweenKilledProp;
 
@@ -43,6 +45,14 @@ namespace DOTweenModular2D.Editor
         protected Kill killTypeBeforePreview;
 
         protected const float buttonSize = 40;
+
+        private void OnDisable()
+        {
+            if (target == null)
+            {
+                ClearSavedEditorPrefs();
+            }
+        }
 
         #region Handle Properties
 
@@ -115,6 +125,69 @@ namespace DOTweenModular2D.Editor
 
         #endregion
 
+        protected virtual void ClearSavedEditorPrefs()
+        {
+            if (EditorPrefs.HasKey(savedLifeTimeSettingsFoldout))
+            {
+                EditorPrefs.DeleteKey(savedLifeTimeSettingsFoldout);
+            }
+
+            if (EditorPrefs.HasKey(savedTypeSettingsFoldout))
+            {
+                EditorPrefs.DeleteKey(savedTypeSettingsFoldout);
+            }
+
+            if (EditorPrefs.HasKey(savedValuesFoldout))
+            {
+                EditorPrefs.DeleteKey(savedValuesFoldout);
+            }
+
+            if (EditorPrefs.HasKey(savedEventsFoldout))
+            {
+                EditorPrefs.DeleteKey(savedEventsFoldout);
+            }
+
+            if (EditorPrefs.HasKey(savedEditorFoldout))
+            {
+                EditorPrefs.DeleteKey(savedEditorFoldout);
+            }
+
+            if (EditorPrefs.HasKey(savedEditorFoldout))
+            {
+                EditorPrefs.DeleteKey(savedEditorFoldout);
+            }
+
+            if (EditorPrefs.HasKey(savedEditPath))
+            {
+                EditorPrefs.DeleteKey(savedEditPath);
+            }
+
+            if (EditorPrefs.HasKey(savedHandleIndex))
+            {
+                EditorPrefs.DeleteKey(savedHandleIndex);
+            }
+
+            if (EditorPrefs.HasKey(savedHandleColorIndex))
+            {
+                EditorPrefs.DeleteKey(savedHandleColorIndex);
+            }
+
+            if (EditorPrefs.HasKey(savedHandleRadius))
+            {
+                EditorPrefs.DeleteKey(savedHandleRadius);
+            }
+
+            if (EditorPrefs.HasKey(savedLineColorIndex))
+            {
+                EditorPrefs.DeleteKey(savedLineColorIndex);
+            }
+
+            if (EditorPrefs.HasKey(savedLineWidth))
+            {
+                EditorPrefs.DeleteKey(savedLineWidth);
+            }
+        }
+
         #region Setup Functions
 
         /// <summary>
@@ -127,6 +200,7 @@ namespace DOTweenModular2D.Editor
             killProp = serializedObject.FindProperty("kill");
             destroyComponentProp = serializedObject.FindProperty("destroyComponent");
             destroyGameObjectProp = serializedObject.FindProperty("destroyGameObject");
+
             delayProp = serializedObject.FindProperty("delay");
             tweenTypeProp = serializedObject.FindProperty("tweenType");
             loopTypeProp = serializedObject.FindProperty("loopType");
@@ -134,7 +208,9 @@ namespace DOTweenModular2D.Editor
             curveProp = serializedObject.FindProperty("curve");
             loopsProp = serializedObject.FindProperty("loops");
             durationProp = serializedObject.FindProperty("duration");
+
             onTweenCreatedProp = serializedObject.FindProperty("onTweenCreated");
+            onTweenStartedProp = serializedObject.FindProperty("onTweenStarted");
             onTweenCompletedProp = serializedObject.FindProperty("onTweenCompleted");
             onTweenKilledProp = serializedObject.FindProperty("onTweenKilled");
         }
@@ -181,7 +257,7 @@ namespace DOTweenModular2D.Editor
             typeSettingsFoldout = EditorPrefs.GetBool(savedTypeSettingsFoldout, true);
             valuesFoldout = EditorPrefs.GetBool(savedValuesFoldout, true);
             eventsFoldout = EditorPrefs.GetBool(savedEventsFoldout, false);
-            editorFoldout = EditorPrefs.GetBool(savedEditorFoldout, false);
+            editorFoldout = EditorPrefs.GetBool(savedEditorFoldout, true);
 
             // Apply saved values to Editor Properties
             editorProperties.handleIndex = EditorPrefs.GetInt(savedHandleIndex, 0);
@@ -196,7 +272,7 @@ namespace DOTweenModular2D.Editor
 
         #endregion
 
-        #region Draw Properties Functions
+        #region Inspector Draw Functions
 
         /// <summary>
         /// Draws begin, tweenObjectProp(if Begin = After or With), kill <br/>
@@ -213,8 +289,12 @@ namespace DOTweenModular2D.Editor
             }
 
             EditorGUILayout.PropertyField(killProp);
-            EditorGUILayout.PropertyField(destroyComponentProp);
-            EditorGUILayout.PropertyField(destroyGameObjectProp);
+
+            if (doBase.kill != Kill.Manual)
+            {
+                EditorGUILayout.PropertyField(destroyComponentProp);
+                EditorGUILayout.PropertyField(destroyGameObjectProp);
+            }
         }
 
         /// <summary>
@@ -264,7 +344,7 @@ namespace DOTweenModular2D.Editor
 
             EditorGUILayout.PropertyField(easeTypeProp);
 
-            if ((DG.Tweening.Ease)easeTypeProp.enumValueIndex == DG.Tweening.Ease.INTERNAL_Custom)
+            if ((Ease)easeTypeProp.enumValueIndex == Ease.INTERNAL_Custom)
             {
                 EditorGUILayout.PropertyField(curveProp);
             }
@@ -285,11 +365,12 @@ namespace DOTweenModular2D.Editor
         }
 
         /// <summary>
-        /// Draws onTweenCreated, onTweenCompleted events
+        /// Draws onTweenCreated, onTweenStartedProp, onTweenCompleted, onTweenKilledProp events
         /// </summary>
         protected void DrawEvents()
         {
             EditorGUILayout.PropertyField(onTweenCreatedProp);
+            EditorGUILayout.PropertyField(onTweenStartedProp);
             EditorGUILayout.PropertyField(onTweenCompletedProp);
             EditorGUILayout.PropertyField(onTweenKilledProp);
         }
@@ -418,8 +499,7 @@ namespace DOTweenModular2D.Editor
             string text = doBase.begin.ToString();
             Handles.Label(midPoint, text);
 
-            const float arrowOffset = 0.7f;
-            Vector2 arrowPosition = midPoint + arrowOffset * (lineStart - midPoint);
+            Vector2 arrowPosition = Vector2.Lerp(lineStart, lineEnd, 0.1f);
 
             Vector2 arrowDirection = lineStart - midPoint;
 
@@ -440,7 +520,7 @@ namespace DOTweenModular2D.Editor
                 midPoint = (lineStart + lineEnd) * 0.5f;                
                 Handles.Label(midPoint, text);
 
-                arrowPosition = midPoint + arrowOffset * (lineStart - midPoint);
+                arrowPosition = Vector2.Lerp(lineStart, lineEnd, 0.1f);
                 arrowDirection = lineStart - midPoint;
                 Handles.ConeHandleCap(10, arrowPosition, Quaternion.LookRotation(arrowDirection), 0.5f, EventType.Repaint);
             }
@@ -529,6 +609,12 @@ namespace DOTweenModular2D.Editor
 
         public int lineColorIndex;
         public float lineWidth;
+    }
+
+    public class RelativeFlags : ScriptableObject
+    {
+        public bool firstTimeRelative;
+        public bool firstTimeNonRelative;
     }
 
 }

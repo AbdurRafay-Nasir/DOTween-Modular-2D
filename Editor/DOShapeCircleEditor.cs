@@ -1,33 +1,35 @@
 #if UNITY_EDITOR
 
 using DOTweenModular2D.Enums;
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
 namespace DOTweenModular2D.Editor
 {
-    [CustomEditor(typeof(DOMove)), CanEditMultipleObjects]
-    public class DOMoveEditor : DOLookAtBaseEditor
+    [CustomEditor(typeof(DOShapeCircle))]
+    [CanEditMultipleObjects]
+    public class DOShapeCircleEditor : DOLookAtBaseEditor
     {
-
         #region Serialized Properties
 
-        private SerializedProperty speedBasedProp;
         private SerializedProperty useLocalProp;
         private SerializedProperty relativeProp;
         private SerializedProperty snappingProp;
-        private SerializedProperty targetPositionProp;
+        private SerializedProperty centerProp;
+        private SerializedProperty endDegreeProp;
+
+        private SerializedProperty lookProp;
 
         #endregion
 
-        private DOMove doMove;
+        private DOShapeCircle doShapeCircle;
         private RelativeFlags relativeFlags;
-        private Vector3 beginPosition;
+        private Vector2 beginPosition;
 
         private bool[] tabStates = new bool[7];
         private string[] savedTabStates = new string[7];
 
-        #region Foldout bool Properties
+        #region Foldout Settings
 
         private bool moveSettingsFoldout = true;
         private string savedMoveSettingsFoldout;
@@ -38,12 +40,12 @@ namespace DOTweenModular2D.Editor
 
         private void OnEnable()
         {
-            doMove = (DOMove)target;
+            doShapeCircle = (DOShapeCircle)target;
             relativeFlags = CreateInstance<RelativeFlags>();
-            beginPosition = doMove.transform.position;
+            beginPosition = doShapeCircle.transform.position;
 
             SetupSerializedProperties();
-            SetupSavedVariables(doMove);
+            SetupSavedVariables(doShapeCircle);
         }
 
         public override void OnInspectorGUI()
@@ -108,33 +110,8 @@ namespace DOTweenModular2D.Editor
             {
                 EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
-                // Draw Move Settings
-                moveSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(moveSettingsFoldout, "Move Settings");
-                EditorPrefs.SetBool(savedMoveSettingsFoldout, moveSettingsFoldout);
-                if (moveSettingsFoldout)
-                {
-                    EditorGUI.indentLevel++;
-
-                    EditorGUILayout.BeginVertical("HelpBox");
-                    EditorGUILayout.Space();
-
-                    DrawMoveSettings();
-
-                    EditorGUILayout.Space();
-                    EditorGUILayout.EndVertical();
-
-                    EditorGUI.indentLevel--;
-                }
-                EditorGUILayout.EndFoldoutHeaderGroup();
-            }
-
-
-            if (tabStates[3])
-            {
-                EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-
-                // Draw LookAt Settings
-                lookAtSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(lookAtSettingsFoldout, "LookAt Settings");
+                // Draw Scale Settings
+                lookAtSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(lookAtSettingsFoldout, "Look At Settings");
                 EditorPrefs.SetBool(savedLookAtSettingsFoldout, lookAtSettingsFoldout);
                 if (lookAtSettingsFoldout)
                 {
@@ -154,6 +131,30 @@ namespace DOTweenModular2D.Editor
             }
 
             DrawLookAtHelpBox();
+
+            if (tabStates[3])
+            {
+                EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+
+                // Draw Scale Settings
+                moveSettingsFoldout = EditorGUILayout.BeginFoldoutHeaderGroup(moveSettingsFoldout, "Move Settings");
+                EditorPrefs.SetBool(savedMoveSettingsFoldout, moveSettingsFoldout);
+                if (moveSettingsFoldout)
+                {
+                    EditorGUI.indentLevel++;
+
+                    EditorGUILayout.BeginVertical("HelpBox");
+                    EditorGUILayout.Space();
+
+                    DrawMoveSettings();
+
+                    EditorGUILayout.Space();
+                    EditorGUILayout.EndVertical();
+
+                    EditorGUI.indentLevel--;
+                }
+                EditorGUILayout.EndFoldoutHeaderGroup();
+            }
 
             if (tabStates[4])
             {
@@ -179,6 +180,7 @@ namespace DOTweenModular2D.Editor
                 EditorGUILayout.EndFoldoutHeaderGroup();
             }
 
+
             if (tabStates[5])
             {
                 EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
@@ -197,8 +199,6 @@ namespace DOTweenModular2D.Editor
                 }
                 EditorGUILayout.EndFoldoutHeaderGroup();
             }
-
-            serializedObject.ApplyModifiedProperties();
 
             if (tabStates[6])
             {
@@ -224,6 +224,8 @@ namespace DOTweenModular2D.Editor
                 EditorGUILayout.EndFoldoutHeaderGroup();
             }
 
+            serializedObject.ApplyModifiedProperties();
+
             if (EditorApplication.isPlaying)
                 return;
 
@@ -245,12 +247,12 @@ namespace DOTweenModular2D.Editor
 
         private void OnSceneGUI()
         {
-            if (doMove.begin == Begin.After ||
-                doMove.begin == Begin.With)
+            if (doShapeCircle.begin == Begin.After ||
+                doShapeCircle.begin == Begin.With)
             {
                 Handles.color = Color.white;
 
-                if (doMove.tweenObject != null)
+                if (doShapeCircle.tweenObject != null)
                     DrawTweenObjectInfo();
             }
 
@@ -264,12 +266,15 @@ namespace DOTweenModular2D.Editor
             else if (TweenPreviewing)
                 startPosition = positionBeforePreview;
             else
-                startPosition = doMove.transform.position;
+                startPosition = doShapeCircle.transform.position;
 
-            Vector3 handlePosition = CalculateTargetPosition(startPosition);
-            DrawTargetLineAndSphere(startPosition, handlePosition, handleColor, lineColor);
+            Vector3 handlePosition = CalculateCenterPosition(startPosition);
 
-            if (doMove.lookAt != LookAtSimple.None)
+            DrawCenterLineAndSphere(startPosition, handlePosition, handleColor, lineColor);
+            // DrawCircle(startPosition, handlePosition, Vector2.Distance(startPosition, handlePosition));
+
+            if (doShapeCircle.look != LookAtPath.None &&
+                doShapeCircle.look != LookAtPath.Percentage)
             {
                 DrawLookAtLine();
                 DrawRotationClampCircle();
@@ -277,46 +282,45 @@ namespace DOTweenModular2D.Editor
 
             if (!EditorApplication.isPlaying && editPath)
             {
-                DrawTargetHandle(handlePosition, handleColor);
+                DrawCenterHandle(handlePosition, handleColor);
 
-                if (doMove.lookAt == LookAtSimple.Position)
+                if (doShapeCircle.look == LookAtPath.Position)
                     DrawLookAtHandle();
             }
-
         }
 
         #endregion
 
-        private Vector3 CalculateTargetPosition(Vector2 startPosition)
+        private Vector3 CalculateCenterPosition(Vector2 startPosition)
         {
             Vector3 handlePosition;
 
-            if (doMove.useLocal)
+            if (doShapeCircle.useLocal)
             {
-                if (doMove.transform.parent != null)
+                if (doShapeCircle.transform.parent != null)
                 {
-                    handlePosition = doMove.transform.parent.TransformPoint(doMove.targetPosition);
+                    handlePosition = doShapeCircle.transform.parent.TransformPoint(doShapeCircle.center);
                 }
                 else
                 {
-                    handlePosition = doMove.targetPosition;
+                    handlePosition = doShapeCircle.center;
                 }
             }
 
             else
             {
 
-                if (doMove.relative)
+                if (doShapeCircle.relative)
                 {
                     if (relativeFlags.firstTimeRelative)
                     {
-                        doMove.targetPosition = doMove.targetPosition - (Vector2)doMove.transform.position;
+                        doShapeCircle.center = doShapeCircle.center - (Vector2)doShapeCircle.transform.position;
 
-                        Undo.RecordObject(relativeFlags, "DOMoveEditor_firstTimeNonRelative");
+                        Undo.RecordObject(relativeFlags, "DOShapeCircleEditor_firstTimeRelative");
                         relativeFlags.firstTimeRelative = false;
                     }
 
-                    handlePosition = startPosition + doMove.targetPosition;
+                    handlePosition = startPosition + doShapeCircle.center;
 
                     relativeFlags.firstTimeNonRelative = true;
                 }
@@ -324,13 +328,13 @@ namespace DOTweenModular2D.Editor
                 {
                     if (relativeFlags.firstTimeNonRelative)
                     {
-                        doMove.targetPosition = doMove.targetPosition + (Vector2)doMove.transform.position;
+                        doShapeCircle.center = doShapeCircle.center + (Vector2)doShapeCircle.transform.position;
 
-                        Undo.RecordObject(relativeFlags, "DOMoveEditor_firstTimeRelative");
+                        Undo.RecordObject(relativeFlags, "DOShapeCircleEditor_firstTimeNonRelative");
                         relativeFlags.firstTimeNonRelative = false;
-                    }
+                     }
 
-                    handlePosition = doMove.targetPosition;
+                    handlePosition = doShapeCircle.center;
 
                     relativeFlags.firstTimeRelative = true;
                 }
@@ -342,16 +346,30 @@ namespace DOTweenModular2D.Editor
 
         #region Scene Draw Functions
 
-        private void DrawTargetLineAndSphere(Vector3 startPosition, Vector3 endPosition, Color handleColor, Color lineColor)
+        protected new void DrawLookAtHandle()
         {
-            Handles.color = handleColor;
-            Handles.SphereHandleCap(2, endPosition, Quaternion.identity, currentHandleRadius, EventType.Repaint);
+            Vector2 newLookAtPosition = Handles.PositionHandle(doShapeCircle.lookAtPosition, Quaternion.identity);
 
-            Handles.color = lineColor;
-            Handles.DrawLine(startPosition, endPosition, currentLineWidth);
+            if (newLookAtPosition != doShapeCircle.lookAtPosition)
+            {
+                Undo.RecordObject(doShapeCircle, "Change Look At Position_DOLookAt");
+                doShapeCircle.lookAtPosition = newLookAtPosition;
+            }
         }
 
-        private void DrawTargetHandle(Vector3 handlePosition, Color handleColor)
+        protected new void DrawLookAtLine()
+        {
+            if (doShapeCircle.look == LookAtPath.Position)
+            {
+                Handles.DrawDottedLine(doShapeCircle.transform.position, doShapeCircle.lookAtPosition, 5f);
+            }
+            else if (doShapeCircle.lookAtTarget != null)
+            {
+                Handles.DrawDottedLine(doShapeCircle.transform.position, doShapeCircle.lookAtTarget.position, 5f);
+            }
+        }
+
+        private void DrawCenterHandle(Vector3 handlePosition, Color handleColor)
         {
             Vector3 newHandlePosition;
 
@@ -369,13 +387,37 @@ namespace DOTweenModular2D.Editor
             if (newHandlePosition != handlePosition)
             {
                 // Register the current object for undo
-                Undo.RecordObject(doMove, "Move Handle");
+                Undo.RecordObject(doShapeCircle, "Center Move Handle");
 
                 // Perform the handle move and update the serialized data
                 Vector2 delta = newHandlePosition - handlePosition;
-                doMove.targetPosition += delta;
+                doShapeCircle.center += delta;
             }
         }
+
+        private void DrawCenterLineAndSphere(Vector2 startPosition, Vector2 endPosition, 
+                                             Color handleColor, Color lineColor)
+        {
+            Handles.color = handleColor;
+            Handles.SphereHandleCap(2, endPosition, Quaternion.identity, currentHandleRadius, EventType.Repaint);
+
+            Handles.color = lineColor;
+            Handles.DrawLine(startPosition, endPosition, currentLineWidth);
+        }
+
+        //private void DrawCircle(Vector2 startPosition, Vector2 center, float radius)
+        //{
+        //    //// Calculate the direction vector from center to startPosition
+        //    //Vector2 direction = (startPosition - center).normalized;
+
+        //    //// Calculate the 'from' point using the calculated direction vector and radius
+        //    //Vector3 from = new Vector3(direction.x * radius + center.x, direction.y * radius + center.y);
+        //    //Handles.DrawWireArc(center, Vector3.back, from, 
+        //    //                    doShapeCircle.endDegree + 90f, radius, currentLineWidth);
+
+        //    Handles.DrawWireArc(center, Vector3.back, Vector2.up,
+        //            doShapeCircle.endDegree + 90f, radius, currentLineWidth);
+        //}
 
         #endregion
 
@@ -388,7 +430,7 @@ namespace DOTweenModular2D.Editor
             GUIStyle toggleStyle = new GUIStyle(EditorStyles.miniButton);
             toggleStyle.fixedHeight = 30f;
 
-            string[] tabNames = new string[] { "Life", "Type", "Move", "Look At", "Values", "Events", "Editor" };
+            string[] tabNames = new string[] { "Life", "Type", "Look At", "Move", "Values", "Events", "Editor" };
 
             for (int i = 0; i < tabStates.Length; i++)
             {
@@ -406,15 +448,74 @@ namespace DOTweenModular2D.Editor
 
         private void DrawMoveSettings()
         {
-            EditorGUILayout.PropertyField(speedBasedProp);
             EditorGUILayout.PropertyField(useLocalProp);
-            EditorGUILayout.PropertyField(relativeProp);
+
+            if (!doShapeCircle.useLocal)
+            {
+                EditorGUILayout.PropertyField(relativeProp);
+            }
+
             EditorGUILayout.PropertyField(snappingProp);
+        }
+
+        protected new void DrawLookAtSettings()
+        {
+            EditorGUILayout.PropertyField(lookProp);
+
+            if (doShapeCircle.look == LookAtPath.None)
+                return;
+
+            switch (doShapeCircle.look)
+            {
+                case LookAtPath.Position:
+                    EditorGUILayout.PropertyField(lookAtPositionProp);
+                    break;
+
+                case LookAtPath.Transform:
+                    EditorGUILayout.PropertyField(lookAtTargetProp);
+                    break;
+            }
+
+            if (doShapeCircle.look == LookAtPath.Position ||
+                doShapeCircle.look == LookAtPath.Transform)
+            {
+                EditorGUILayout.PropertyField(offsetProp);
+                EditorGUILayout.PropertyField(smoothFactorProp);
+                EditorGUILayout.PropertyField(minProp);
+                EditorGUILayout.PropertyField(maxProp);
+            }
+        }
+
+        protected new void DrawLookAtHelpBox()
+        {
+            if (doShapeCircle.look == LookAtPath.Transform && doShapeCircle.lookAtTarget == null)
+            {
+                EditorGUILayout.HelpBox("Look Target not Assigned", MessageType.Error);
+            }
+            else if (doShapeCircle.look != LookAtPath.Transform && doShapeCircle.lookAtTarget != null)
+            {
+                EditorGUILayout.BeginHorizontal();
+
+                EditorGUILayout.HelpBox("Look Target is still Assigned, it Should be removed", MessageType.Warning);
+
+                GUIContent trashButton = EditorGUIUtility.IconContent("TreeEditor.Trash");
+                trashButton.tooltip = "Remove Look At Target";
+
+                if (GUILayout.Button(trashButton, GUILayout.Height(buttonSize), GUILayout.Width(buttonSize * 2f)))
+                {
+                    Undo.RecordObject(doShapeCircle, "Look At Target");
+                    doShapeCircle.lookAtTarget = null;
+                }
+
+                EditorGUILayout.EndHorizontal();
+            }
         }
 
         protected override void DrawValues()
         {
-            EditorGUILayout.PropertyField(targetPositionProp);
+            EditorGUILayout.PropertyField(centerProp);
+            EditorGUILayout.PropertyField(endDegreeProp);
+
             base.DrawValues();
         }
 
@@ -425,25 +526,28 @@ namespace DOTweenModular2D.Editor
         protected override void SetupSerializedProperties()
         {
             base.SetupSerializedProperties();
-            speedBasedProp = serializedObject.FindProperty("speedBased");
+
             useLocalProp = serializedObject.FindProperty("useLocal");
             relativeProp = serializedObject.FindProperty("relative");
             snappingProp = serializedObject.FindProperty("snapping");
-            targetPositionProp = serializedObject.FindProperty("targetPosition");
+            centerProp = serializedObject.FindProperty("center");
+            endDegreeProp = serializedObject.FindProperty("endDegree");
+
+            lookProp = serializedObject.FindProperty("look");
         }
 
-        protected override void SetupSavedVariables(DOBase doMove)
+        protected override void SetupSavedVariables(DOBase doShapeCircle)
         {
-            base.SetupSavedVariables(doMove);
+            base.SetupSavedVariables(doShapeCircle);
 
-            int instanceId = doMove.GetInstanceID();
+            int instanceId = doShapeCircle.GetInstanceID();
 
-            savedMoveSettingsFoldout = "DOMoveEditor_moveSettingsFoldout_" + instanceId;
+            savedMoveSettingsFoldout = "DOShapeCircleEditor_moveSettingsFoldout_" + instanceId;
             moveSettingsFoldout = EditorPrefs.GetBool(savedMoveSettingsFoldout, true);
 
             for (int i = 0; i < savedTabStates.Length; i++)
             {
-                savedTabStates[i] = "DOMoveEditor_tabStates_" + i + " " + instanceId;
+                savedTabStates[i] = "DOShapeCircleEditor_tabStates_" + i + " " + instanceId;
                 tabStates[i] = EditorPrefs.GetBool(savedTabStates[i], true);
             }
         }
@@ -459,8 +563,7 @@ namespace DOTweenModular2D.Editor
         }
 
         #endregion
-
     }
-
 }
+
 #endif

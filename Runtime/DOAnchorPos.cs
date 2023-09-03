@@ -2,9 +2,9 @@ using DG.Tweening;
 using UnityEngine;
 
 namespace DOTweenModular2D
-{   
-    [AddComponentMenu("DOTween Modular 2D/Transform/DO Move", 50)]
-    public class DOMove : DOLookAt
+{
+    [AddComponentMenu("DOTween Modular 2D/UI/DO Anchor Pos")]
+    public class DOAnchorPos : DOBase
     {
         [Tooltip("If TRUE, the tween will Move duration amount in each second")]
         public bool speedBased;
@@ -16,21 +16,15 @@ namespace DOTweenModular2D
         [Tooltip("If TRUE, the tween will smoothly snap all values to integers")]
         public bool snapping;
 
-        [Tooltip("The position to reach, if relative is true game object will move as: " + "\n" + 
+        [Tooltip("The position to reach, if relative is true game object will move as: " + "\n" +
                  "targetPosition = targetPosition + transform.position")]
         public Vector2 targetPosition;
 
-        [Tooltip("If TRUE, game object will move in local space")]
-        public bool useLocal;
-
         public override void CreateTween()
         {
-            if (useLocal)
-                tween = transform.DOLocalMove(targetPosition, duration, snapping);
-          
-            else
-                tween = transform.DOMove(targetPosition, duration, snapping);
-        
+            RectTransform rectTransform = (RectTransform)transform;
+            tween = rectTransform.DOAnchorPos(targetPosition, duration, snapping);
+
             if (easeType == Ease.INTERNAL_Custom)
                 tween.SetEase(curve);
             else
@@ -44,8 +38,6 @@ namespace DOTweenModular2D
             tween.SetDelay(delay);
 
             InvokeTweenCreated();
-
-            SetupLookAt();
         }
     }
 }

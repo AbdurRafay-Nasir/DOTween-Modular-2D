@@ -5,8 +5,6 @@ using UnityEditor;
 
 namespace DOTweenModular2D.Editor
 {
-    [CustomEditor(typeof(DOShakeBase))]
-    [CanEditMultipleObjects]
     public class DOShakeBaseEditor : DOBaseEditor
     {
         #region Serialized Properties
@@ -255,6 +253,16 @@ namespace DOTweenModular2D.Editor
             {
                 savedTabStates[i] = "DOShakeEditor_tabStates_" + i + " " + instanceId;
                 tabStates[i] = EditorPrefs.GetBool(savedTabStates[i], true);
+            }
+        }
+
+        protected override void ClearSavedEditorPrefs()
+        {
+            base.ClearSavedEditorPrefs();
+
+            if (EditorPrefs.HasKey(savedShakeSettingsFoldout))
+            {
+                EditorPrefs.DeleteKey(savedShakeSettingsFoldout);
             }
         }
 

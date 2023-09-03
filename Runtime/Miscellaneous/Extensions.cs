@@ -1,9 +1,115 @@
+using DG.Tweening.Core;
+using DG.Tweening.Plugins;
+using DG.Tweening;
 using UnityEngine;
+using DG.Tweening.Plugins.Options;
 
-namespace DOTweenModular2D
+namespace DOTweenModular2D.Miscellaneous
 {
     public static class Extensions
     {
+        #region Tween Functions
+
+        /// <summary>Tweens a RectTransform's anchoredPosition so that it draws a circle around the given center.
+        /// Also stores the RectTransform as the tween's target so it can be used for filtered operations.<para/>
+        /// IMPORTANT: SetFrom(value) requires a <see cref="Vector2"/> instead of a float, where the X property represents the "from degrees value"</summary>
+        /// <param name="center">Circle-center/pivot around which to rotate (in UI anchoredPosition coordinates)</param>
+        /// <param name="endValueDegrees">The end value degrees to reach (to rotate counter-clockwise pass a negative value)</param>
+        /// <param name="duration">The duration of the tween</param>
+        /// <param name="relativeCenter">If TRUE the <see cref="center"/> coordinates will be considered as relative to the target's current anchoredPosition</param>
+        /// <param name="snapping">If TRUE the tween will smoothly snap all values to integers</param>
+        public static TweenerCore<Vector2, Vector2, CircleOptions> DOShapeCircle(
+            this Transform target, Vector2 center, float endValueDegrees, float duration,
+            bool relativeCenter = false, bool snapping = false
+        )
+
+        {
+            TweenerCore<Vector2, Vector2, CircleOptions> t = DOTween.To(
+                CirclePlugin.Get(), () => target.position, x => target.position = x, center, duration
+            );
+            t.SetOptions(endValueDegrees, relativeCenter, snapping).SetTarget(target);
+            return t;
+        }
+
+        /// <summary>Tweens a RectTransform's anchoredPosition so that it draws a circle around the given center.
+        /// Also stores the RectTransform as the tween's target so it can be used for filtered operations.<para/>
+        /// IMPORTANT: SetFrom(value) requires a <see cref="Vector2"/> instead of a float, where the X property represents the "from degrees value"</summary>
+        /// <param name="center">Circle-center/pivot around which to rotate (in UI anchoredPosition coordinates)</param>
+        /// <param name="endValueDegrees">The end value degrees to reach (to rotate counter-clockwise pass a negative value)</param>
+        /// <param name="duration">The duration of the tween</param>
+        /// <param name="relativeCenter">If TRUE the <see cref="center"/> coordinates will be considered as relative to the target's current anchoredPosition</param>
+        /// <param name="snapping">If TRUE the tween will smoothly snap all values to integers</param>
+        public static TweenerCore<Vector2, Vector2, CircleOptions> DOLocalShapeCircle(
+            this Transform target, Vector2 center, float endValueDegrees,
+            float duration, bool snapping = false
+        )
+
+        {
+            TweenerCore<Vector2, Vector2, CircleOptions> t = DOTween.To(
+                CirclePlugin.Get(), () => target.localPosition, x => target.localPosition = x, center, duration
+            );
+            t.SetOptions(endValueDegrees, false, snapping).SetTarget(target);
+            return t;
+        }
+
+        /// <summary>
+        /// Tweens Sprite Renderer Size to given targetSize
+        /// </summary>
+        /// <param name="targetSize">The Size to Reach</param>
+        /// <param name="duration">The duration of the tween</param>
+        /// <remarks>Does not take into account the SpriteRenderer Draw Mode. <br/>
+        /// SpriteRenderer Draw Mode should be set to Sliced or Tiled
+        /// </remarks>
+        public static TweenerCore<Vector2, Vector2, VectorOptions> DOSize(
+            this SpriteRenderer target, Vector2 targetSize, float duration
+        )
+        {
+            TweenerCore<Vector2, Vector2, VectorOptions> tween = DOTween.To(
+                () => target.size, x => target.size = x, targetSize, duration);
+
+            tween.SetTarget(target);
+            return tween;
+        }
+
+        /// <summary>
+        /// Tweens Sprite Renderer Width to given targetWidth
+        /// </summary>
+        /// <param name="targetWidth">The Width to Reach</param>
+        /// <param name="duration">The duration of the tween</param>
+        /// <remarks>Does not take into account the SpriteRenderer Draw Mode. <br/>
+        /// SpriteRenderer Draw Mode should be set to Sliced or Tiled
+        /// </remarks>
+        public static TweenerCore<float, float, FloatOptions> DOWidth(
+            this SpriteRenderer target, float targetWidth, float duration
+        )
+        {
+            TweenerCore<float, float, FloatOptions> tween = DOTween.To(
+                () => target.size.x, x => target.size = new Vector2(x, target.size.y), targetWidth, duration);
+
+            tween.SetTarget(target);
+            return tween;
+        }
+
+        /// <summary>
+        /// Tweens Sprite Renderer Height to given targetheight
+        /// </summary>
+        /// <param name="targetheight">The Height to Reach</param>
+        /// <param name="duration">The duration of the tween</param>
+        /// <remarks>Does not take into account the SpriteRenderer Draw Mode. <br/>
+        /// SpriteRenderer Draw Mode should be set to Sliced or Tiled
+        /// </remarks>
+        public static TweenerCore<float, float, FloatOptions> DOHeight(
+            this SpriteRenderer target, float targetheight, float duration
+        )
+        {
+            TweenerCore<float, float, FloatOptions> tween = DOTween.To(
+                () => target.size.y, y => target.size = new Vector2(target.size.x, y), targetheight, duration);
+
+            tween.SetTarget(target);
+            return tween;
+        }
+
+        #endregion
 
         #region LookAt2D Functions
 
