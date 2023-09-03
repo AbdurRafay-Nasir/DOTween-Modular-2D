@@ -30,9 +30,6 @@ Collection of Modular components for DOTween
 
 Now You are ready to use DOTween Modular 2D, also you can rename com.linkedgames.dotweenmodular2d
 
-## Issues
-- targetPosition and pathPoints in DOMove and DOPath respectively is recalculated when changing value of 'relative', Undo/Redo of 'relative' does not correctly apply previous value of targetPosition and pathPoints 
-
 ## Contribute
 If you would like to contribute to the package visit this [link](https://github.com/Linked-Games/DOTween-Modular-2D-Development)
 
