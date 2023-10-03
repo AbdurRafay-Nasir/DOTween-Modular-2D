@@ -29,7 +29,7 @@ Collection of Modular components for DOTween
 ## Installation
 - Window -> Package Manager
 - Click **+**, Select **Add Package Form Git URL**
-- Paste this URL: https://github.com/Linked-Games/DOTween-Modular-2D.git, Click add
+- Paste this URL: https://github.com/AbdurRafay-Nasir/DOTween-Modular-2D.git, Click add
 - There will be some errors, ignore them
 - Project Window -> Packages -> DOTween Modular 2D -> RIGHT_CLICK -> Show in Explorer
 - Cut com.linkedgames.dotweenmodular2d, Paste at YOUR_PROJECT -> Assets -> Plugins
@@ -42,7 +42,7 @@ Collection of Modular components for DOTween
 Now You are ready to use DOTween Modular 2D, also you can rename com.linkedgames.dotweenmodular2d
 
 ## Contribute
-If you would like to contribute to the package visit this [link](https://github.com/Linked-Games/DOTween-Modular-2D-Development)
+If you would like to contribute to the package visit this [link](github.com/AbdurRafay-Nasir/DOTween-Modular-2D-Development)
 
 ## Author
 - Abdur Rafay Nasir
